@@ -1,0 +1,4 @@
+rootProject.name = 'applifting'
+include 'online-shopping'
+include 'functional-test'
+

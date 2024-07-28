@@ -1,0 +1,63 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+plugins {
+    id 'java'
+    id 'se.thinkcode.cucumber-runner' version '0.0.8'
+}
+
+group = 'io.applifting'
+version = '1.0-SNAPSHOT'
+
+ext {
+    junitJupiterVersion = '5.10.0'
+    seleniumVersion = '4.17.0'
+    cucumberVersion = '7.15.0'
+    assertjVersion = '3.24.2'
+    webDriverManagerVersion = '5.9.1'
+    log4jVersion = '1.2.17'
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'se.thinkcode.cucumber-runner'
+
+    dependencies {
+        implementation platform("org.junit:junit-bom:$junitJupiterVersion")
+        testImplementation 'org.junit.jupiter:junit-jupiter-api'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+        implementation 'org.junit.vintage:junit-vintage-engine'
+        implementation "org.seleniumhq.selenium:selenium-java:$seleniumVersion"
+        implementation "org.seleniumhq.selenium:selenium-support:$seleniumVersion"
+        implementation "io.cucumber:cucumber-java:$cucumberVersion"
+        implementation "io.cucumber:cucumber-junit:$cucumberVersion"
+        implementation "org.assertj:assertj-core:$assertjVersion"
+        implementation "io.github.bonigarcia:webdrivermanager:$webDriverManagerVersion"
+        implementation "log4j:log4j:$log4jVersion"
+    }
+
+    configurations {
+        cucumberRuntime {
+            extendsFrom testImplementation
+        }
+    }
+
+    cucumber {
+        main = 'io.cucumber.core.cli.Main'
+    }
+
+    test {
+        useJUnitPlatform()
+
+        testLogging {
+            events TestLogEvent.FAILED, TestLogEvent.PASSED, TestLogEvent.SKIPPED
+        }
+
+        systemProperties System.getProperties()
+    }
+}
