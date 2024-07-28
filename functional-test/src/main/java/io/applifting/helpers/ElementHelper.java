@@ -3,7 +3,6 @@ package io.applifting.helpers;
 import io.applifting.WebDriverFactory;
 import lombok.Getter;
 import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.List;
 
