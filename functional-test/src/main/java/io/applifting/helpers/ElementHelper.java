@@ -1,54 +1,63 @@
 package io.applifting.helpers;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import io.applifting.WebDriverFactory;
+import lombok.Getter;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.time.Duration;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@Getter
 public class ElementHelper {
 
     private final WebDriver driver;
 
-    private final WebDriverWait wait;
-
-    public ElementHelper(WebDriver driver) {
-        this.driver = driver;
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    public ElementHelper() {
+        this.driver = WebDriverFactory.getDriver();
     }
 
     public void checkElementVisibility(By locator) {
-        WebElement element = driver.findElement(locator);
+        WebElement element = findElementWithRetry(locator);
         assertTrue(element.isDisplayed());
     }
 
     public void checkElementsVisibility(By locator) {
-        waitUntilElementVisible(locator);
-        List<WebElement> elements = driver.findElements(locator);
+        List<WebElement> elements = findElementsWithRetry(locator);
         assertFalse(elements.isEmpty());
         for (WebElement element : elements) {
             assertTrue(element.isDisplayed());
         }
     }
 
-    public void checkPageTitleContains(String title) {
-        String pageTitle = driver.getTitle();
-        assertTrue(pageTitle.contains("Applifting | " + title));
+    public void clickToAcceptCookies(){
+        By cookiesLocator = By.xpath("//div[@class='cky-notice-btn-wrapper']//button[@class='cky-btn cky-btn-accept']");
+         try {
+            WebElement cookies = findElementWithRetry(cookiesLocator);
+            cookies.click();
+        } catch (NotFoundException ignored) {
+
+         }
     }
 
-    public void fillForm(By nameLocator, String name, By emailLocator, String email, By messageLocator, String message, By checkboxButtonLocator, By submitButtonLocator) {
-        waitUntilElementClickable("//form//input[@name='name']");
-        driver.findElement(nameLocator).sendKeys(name);
-        driver.findElement(emailLocator).sendKeys(email);
-        driver.findElement(messageLocator).sendKeys(message);
-        driver.findElement(checkboxButtonLocator).click();
-//        driver.findElement(submitButtonLocator).click(); Commented out to prevent spamming your site :)
+    public void checkPageTitleContains(String title) {
+        String pageTitle = driver.getTitle();
+        assertTrue("Title is: " + pageTitle, pageTitle.contains("Applifting | " + title));
+    }
+
+    public void fillForm(String name, String email, String message) {
+        findElementWithRetry(By.name("name")).sendKeys(name);
+        findElementWithRetry(By.name("email")).sendKeys(email);
+        findElementWithRetry(By.name("message")).sendKeys(message);
+        WebElement checkbox = findElementWithRetry(By.xpath("//button[@role='checkbox']"));
+//        scrollToElement(checkbox);
+        checkbox.click();
+    }
+
+    public void sendFormAndVerify() {
+//        findElementWithRetry(submitButtonLocator).click(); Commented out to prevent spamming your site :)
     }
 
     public String transformPageName(String pageName) {
@@ -58,12 +67,38 @@ public class ElementHelper {
         return pageName.trim().toLowerCase().replace(" ", "-");
     }
 
-    public void waitUntilElementVisible(By xPath) {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(xPath));
+    public WebElement findElementWithRetry(By locator) {
+        int attempts = 0;
+        int maxRetries = 5;
+        while (attempts < maxRetries) {
+            try {
+                return driver.findElement(locator);
+            } catch (StaleElementReferenceException e) {
+                attempts++;
+            }
+        }
+        throw new NotFoundException("Failed to find element after " + maxRetries + " attempts");
     }
 
-
-    public void waitUntilElementClickable(String xPath) {
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xPath)));
+    public List<WebElement> findElementsWithRetry(By locator) {
+        int attempts = 0;
+        int maxRetries = 100;
+        while (attempts < maxRetries) {
+            try {
+                List<WebElement> elements = driver.findElements(locator);
+                if (!elements.isEmpty()) {
+                    return elements;
+                }
+                attempts++;
+            } catch (StaleElementReferenceException e) {
+                attempts++;
+            }
+        }
+        throw new RuntimeException("Failed to find elements after " + maxRetries + " attempts");
     }
+
+//    public void scrollToElement(WebElement element) {
+//        JavascriptExecutor js = (JavascriptExecutor) driver;
+//        js.executeScript("arguments[0].scrollIntoView(true);", element);
+//    }
 }

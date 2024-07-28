@@ -51,3 +51,8 @@ To run the tests and generate reports, use the following commands:
    ```
    
 ## Test report
+- The generated test report is located in `applifting-test-report.html`.
+- Open the report file and click on the chrome icon in the upper right corner.
+- You can see all tests which you can see all the tests that were run (via RunCucumberTest) and the result of their run.
+- On the left side of the report there is also a tab for diagrams, where there is a more detailed overview of the test run.
+- The failed tests contain a screenshot of where the problem/error occurs.
